@@ -28,8 +28,8 @@ const BMPImage = require('./libbmp');
 ![image.bmp](image.bmp)
 
 ## Notes:
-- [] add automated testing
-- [] fix pixel data corruption (won't draw e.g. Math.cos/Math.sin or others)
+- [ ] add automated testing
+- [ ] fix pixel data corruption (won't draw e.g. Math.cos/Math.sin or others)
 
 ## Resources
 - https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
