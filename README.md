@@ -1,5 +1,5 @@
 # libbmp
-A (WIP) reference implementation for the bmp image format
+Pure JS implementation for the bmp image format
 
 ## Example usage
 ```js
@@ -25,11 +25,44 @@ for (let y = 0; y < height; y++) {
 await fsp.writeFile("image.bmp", bmpImage.toBuffer());
 ```
 
-![image.bmp](image.bmp)
+![colormap.bmp](examples/colormap.bmp)
+
+```js
+const width = 256;
+const height = 256;
+const bmpImage = new BMPImage(width, height);
+
+for (let y = 0; y < height; y++) {
+  for (let x = 0; x < width; x++) {
+    bmpImage.setPixel(x, y, 255, 255, 255, 255);
+  }
+}
+
+const gridWidth = 16;
+const gridHeight = 16;
+const gridColor = [0, 0, 0];
+
+for (let x = 1; x < Math.ceil(width / gridWidth); x++) {
+  for (let y = 0; y < height; y++) {
+    bmpImage.setPixel(x * gridWidth, y, ...gridColor);
+  }
+}
+
+for (let y = 1; y < Math.ceil(height / gridHeight); y++) {
+  for (let x = 0; x < width; x++) {
+    bmpImage.setPixel(x, y * gridHeight, ...gridColor);
+  }
+}
+
+await fsp.writeFile("image.bmp", bmpImage.toBuffer());
+```
+
+![colormap.bmp](examples/grid.bmp)
+
 
 ## Notes:
+- [ ] add support for alpha channel, 32 bit per pixel
 - [ ] add automated testing
-- [ ] fix pixel data corruption (won't draw e.g. Math.cos/Math.sin or others)
 
 ## Resources
 - https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm

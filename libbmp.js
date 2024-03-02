@@ -9,7 +9,11 @@ function getInt32Bytes(x) {
 }
 
 class BMPImage {
-  constructor(width, height, dpi = 300) {
+  constructor(width, height, config = {}) {
+    const {
+      dpi = 300,
+    } = config;
+
     if (width > MAX_SIZE || height > MAX_SIZE) {
       throw new Error(`image width or height cannot exceed ${MAX_SIZE}`);
     }
@@ -17,10 +21,11 @@ class BMPImage {
     this.width = width;
     this.height = height;
     this.dpi = dpi;
+    this.bpp = 24;
     this.pixels = [];
 
     for (let y = 0; y < height; y++) {
-      this.pixels.push(Array(width).fill([0, 0, 0]));
+      this.pixels.push(Array(width).fill([0, 0, 0, 255]));
     }
   }
 
@@ -40,7 +45,7 @@ class BMPImage {
       ...reservedBytes,
       ...dataOffsetBytes
     ];
-  
+
     return headerBytes;
   }
 
@@ -50,8 +55,8 @@ class BMPImage {
     const widthBytes = getInt32Bytes(this.width);
     const heightBytes = getInt32Bytes(this.height);
     const planesBytes = [1, 0];
-    const bpsBytes = [24, 0];
-    const compressionBytes = [0, 0, 0, 0];
+    const bpsBytes = [this.bpp, 0];
+    const compressionBytes = [this.bpp === 32 ? 3 : 0, 0, 0, 0];
     const imageSizeBytes = getInt32Bytes(imageSize);
     const xPixelsPerMeterBytes = dpiToPPMBytes;         // 300 dpi to pixel/m
     const yPixelsPerMeterBytes = dpiToPPMBytes;         // 300 dpi to pixel/m
@@ -73,24 +78,22 @@ class BMPImage {
     ];
   }
 
+  // if the image row data is not a multiple of 4, then we fill padding bytes
   getPixelDataBytes() {
-    // if the image row data is not a multiple of 4, then we fill padding bytes
-    const paddingBytesPerRow = Array((4 - ((this.width * 24 / 8) % 4)) % 4).fill(0);
-    return this.pixels.reduce((a, c) => a.concat(...c, ...paddingBytesPerRow), []);
-  }
+    const bytesPerPixel = this.bpp / 8;
+    const paddingBytesPerRow = Array((4 - ((this.width * bytesPerPixel) % 4)) % 4).fill(0);
 
-  getPixelIndex(x, y) {
-    const offset = x % this.width;
-    const index = y % this.height;
-    return (index * this.width) + offset;
+    return this.pixels
+      .reverse()
+      .reduce((pixelDataBytes, pixelRow) => pixelDataBytes.concat(...pixelRow.map((pixel) => pixel.slice(0, bytesPerPixel)), ...paddingBytesPerRow), []);
   }
 
   getPixel(x, y) {
-    return this.pixels[this.width - y - 1][x];
+    return this.pixels[y][x];
   }
 
-  setPixel(x, y, r, g, b) {
-    this.pixels[this.width - y - 1][x] = [b, g, r];
+  setPixel(x, y, r, g, b, a = 255) {
+    this.pixels[y][x] = [b, g, r, a];
   }
 
   toBytes() {
