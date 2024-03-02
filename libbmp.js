@@ -105,7 +105,7 @@ class BMPImage {
   toBytes() {
     const pixelDataBytes = this.getPixelDataBytes();
     const infoHeaderBytes = this.getInfoHeaderBytes(pixelDataBytes.length);
-    const headerBytes = this.getHeaderBytes(pixelDataBytes.length + 54);
+    const headerBytes = this.getHeaderBytes(pixelDataBytes.length);
 
     return [
       ...headerBytes,
