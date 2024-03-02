@@ -1,0 +1,11 @@
+{
+  "name": "libbmp",
+  "version": "1.0.0",
+  "description": "A reference implementation for the bmp image format",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ricksterhd123",
+  "license": "MIT"
+}

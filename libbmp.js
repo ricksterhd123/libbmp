@@ -7,10 +7,19 @@ const METER_TO_INCH = 39.3701;
 
 // https://stackoverflow.com/questions/8482309/converting-javascript-integer-to-byte-array-and-back
 function getInt32Bytes(x) {
-  return [x, (x << 8), (x << 16), (x << 24)].map(z => z >>> 24);
+  return [x, (x << 8), (x << 16), (x << 24)].map(z => z >>> 24).reverse();
 }
 
 // https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
+
+/**
+ * Notes:
+ * 
+ * fields are sequences of bytes in little-endian order, i.e. this is how '1' is encoded:
+ * 
+ * 0x04 0x03 0x02 0x01
+ * 01   00   00   00 
+ */
 function getHeaderBytes(fileSize) {
   if (fileSize > MAX_SIZE) {
     throw new Error(`Header.FileSize exceeds 4 bytes (${MAX_SIZE}), got ${fileSize}`)
@@ -19,7 +28,7 @@ function getHeaderBytes(fileSize) {
   const signatureBytes = [0x42, 0x4D];                          // sigature 2 bytes ='BM'
   const fileSizeBytes = getInt32Bytes(fileSize);                // filesize 4 bytes
   const reservedBytes = [0, 0, 0, 0];                           // reserved 4 bytes =0
-  const dataOffsetBytes = [0, 0, 0, 54];               // offset   4 bytes
+  const dataOffsetBytes = [54, 0, 0, 0];               // offset   4 bytes
 
   const headerBytes = [
     ...signatureBytes,
@@ -34,16 +43,16 @@ function getHeaderBytes(fileSize) {
 function getInfoHeaderBytes(width, height, imageSize, dpi = 300) {
   const dpiToPPMBytes = getInt32Bytes(Math.floor(METER_TO_INCH * dpi));
 
-  const sizeBytes = [0, 0, 0, 40];
+  const sizeBytes = [40, 0, 0, 0];
   const widthBytes = getInt32Bytes(width);
   const heightBytes = getInt32Bytes(height);
-  const planesBytes = [0, 1];
-  const bpsBytes = [0, 24];
+  const planesBytes = [1, 0];
+  const bpsBytes = [24, 0];
   const compressionBytes = [0, 0, 0, 0];
   const imageSizeBytes = getInt32Bytes(imageSize);
   const xPixelsPerMeterBytes = dpiToPPMBytes;         // 300 dpi to pixel/m
   const yPixelsPerMeterBytes = dpiToPPMBytes;         // 300 dpi to pixel/m
-  const colorsUsedBytes = [0, 0, 0, 0];       // 4 bytes for colors used, 24 bit color palette <==> 8 bits per R, G, B <==> 16M colors
+  const colorsUsedBytes = [0, 0, 0, 0];               // 4 bytes for colors used, 24 bit color palette <==> 8 bits per R, G, B <==> 16M colors
   const importantColorsBytes = [0, 0, 0, 0];          // 0 for all used
 
   return [
@@ -61,8 +70,28 @@ function getInfoHeaderBytes(width, height, imageSize, dpi = 300) {
   ];
 }
 
-function getPixelDataBytes(pixels) {
-  return pixels.reduce((a, c) => a.concat(c));
+function getPixelDataBytes(width, height, pixels) {
+
+  const pixelArray = [];
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      pixelArray.push(pixels[y][x]);
+    }
+  }
+
+  const pixelRows = Array(Math.ceil(pixelArray.length / width))
+    .fill()
+    .map((_, i) => pixelArray.slice(i * width, (i + 1) * width));
+
+  // console.log(pixelRows);
+
+  // if the image row data is not a multiple of 4, then we fill padding bytes
+  const paddingBytesPerRow = Array((4 - ((width * 24 / 8) % 4)) % 4).fill(0);
+
+  // console.log(paddingBytesPerRow.length);
+
+  return pixelRows.reduce((a, c) => a.concat(...c, ...paddingBytesPerRow), []);
 }
 
 class BMPImage {
@@ -74,7 +103,11 @@ class BMPImage {
     this.width = width;
     this.height = height;
     this.dpi = dpi;
-    this.pixels = Array(this.width * this.height).fill([0, 0, 0]);
+    this.pixels = [];
+
+    for (let y = 0; y < height; y++) {
+      this.pixels.push(Array(width).fill([0, 0, 0]));
+    }
   }
 
   getPixelIndex(x, y) {
@@ -84,18 +117,19 @@ class BMPImage {
   }
 
   getPixel(x, y) {
-    return this.pixels[this.getPixelIndex(x, y)];
+    return this.pixels[y][x];
   }
 
   setPixel(x, y, r, g, b) {
-    this.pixels[this.getPixelIndex(x, y)] = [r, g, b];
-    return this;
+    this.pixels[y][x] = [b, g, r];
   }
 
   toBytes() {
-    const pixelDataBytes = getPixelDataBytes(this.pixels);
+    const pixelDataBytes = getPixelDataBytes(this.width, this.height, this.pixels);
     const infoHeaderBytes = getInfoHeaderBytes(this.width, this.height, this.dpi);
     const headerBytes = getHeaderBytes(pixelDataBytes.length + 54);
+
+    console.log(JSON.stringify(pixelDataBytes));
 
     return [
       ...headerBytes,
@@ -109,14 +143,4 @@ class BMPImage {
   }
 }
 
-const fsp = require('fs/promises');
-
-(async () => {
-  const bmpImage = new BMPImage(4, 4, 300);
-  bmpImage.setPixel(0, 0, 255, 0, 0);
-
-  console.log(bmpImage.toBytes()[54])
-  // console.log(JSON.stringify(bmpImage.toBytes(), null, 4));
-
-  await fsp.writeFile("image.bmp", bmpImage.toBuffer());
-})();
+module.exports = BMPImage;
