@@ -1,22 +1,13 @@
 // reference implementation
 
-// maximum size is 4 bytes, i.e. 2^32 - 1
+// maximum field size is 4 bytes
 const MAX_SIZE = (2 ** 32) - 1;
-// 1 meter = 39.3701 inches
 const METER_TO_INCH = 39.3701;
 
 function getInt32Bytes(x) {
-  return [x, (x << 8), (x << 16), (x << 24)].map(z => z >>> 24).reverse();
+  return [(x << 24), (x << 16), (x << 8), x].map(z => z >>> 24);
 }
 
-/**
- * Notes:
- * 
- * fields are sequences of bytes in little-endian order, i.e. this is how '1' is encoded:
- * 
- * 0x04 0x03 0x02 0x01
- * 01   00   00   00 
- */
 class BMPImage {
   constructor(width, height, dpi = 300) {
     if (width > MAX_SIZE || height > MAX_SIZE) {
