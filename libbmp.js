@@ -95,7 +95,7 @@ class BMPImage {
   }
 
   getPixel(x, y) {
-    return this.pixels[y][x];
+    return this.pixels[this.width - y - 1][x];
   }
 
   setPixel(x, y, r, g, b) {
