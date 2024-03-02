@@ -1,30 +1,30 @@
 # libbmp
 A (WIP) reference implementation for the bmp image format
 
-## Example
+## Example usage
 ```js
-const fsp = require('fs/promises');
-const BMPImage = require('./libbmp');
+const width = 50;
+const height = 50;
+const bmpImage = new BMPImage(width, height, 300);
+const midPoint = Math.floor((width/2 + height/2) / 2);
+const dist = (x, y) => Math.sqrt((x - midPoint)**2 + (y - midPoint)**2);
 
-(async () => {
-  const width = 200;
-  const height = 200;
-  const bmpImage = new BMPImage(width, height, 300);
-
-  const fn = (x) => x;
-
-  for (let t = 0; t < width; t++) {
-    let x = t;
-    let y = fn(t) % (height + 1);
-    bmpImage.setPixel(x,y, 255, 0, 0);
+for (let y = 0; y < height; y++) {
+  for (let x = 0; x < width; x++) {
+    const distColor = ((midPoint - dist(x, y)) * 255) % 256;
+    if (x % 2 == 1 && y % 2 == 1) {
+      bmpImage.setPixel(x, y, distColor, distColor, 0);
+    } else if (x % 2 == 0 && y % 2 == 0) {
+      bmpImage.setPixel(x, y, distColor, 100, 0);
+    } else {
+      bmpImage.setPixel(x, y, 0, 0, 0);
+    }
   }
+}
 
-  await fsp.writeFile("image.bmp", bmpImage.toBuffer());
-})();
-
+await fsp.writeFile("image.bmp", bmpImage.toBuffer());
 ```
 
-### Output
 ![image.bmp](image.bmp)
 
 ## Notes:
