@@ -35,3 +35,4 @@ const BMPImage = require('./libbmp');
 - https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
 - https://www.martinreddy.net/gfx/2d/BMP.txt
 - https://paulbourke.net/dataformats/bitmaps/
+- https://stackoverflow.com/questions/8482309/converting-javascript-integer-to-byte-array-and-back

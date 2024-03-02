@@ -5,12 +5,9 @@ const MAX_SIZE = (2 ** 32) - 1;
 // 1 meter = 39.3701 inches
 const METER_TO_INCH = 39.3701;
 
-// https://stackoverflow.com/questions/8482309/converting-javascript-integer-to-byte-array-and-back
 function getInt32Bytes(x) {
   return [x, (x << 8), (x << 16), (x << 24)].map(z => z >>> 24).reverse();
 }
-
-// https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
 
 /**
  * Notes:
@@ -71,27 +68,9 @@ function getInfoHeaderBytes(width, height, imageSize, dpi = 300) {
 }
 
 function getPixelDataBytes(width, height, pixels) {
-
-  const pixelArray = [];
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      pixelArray.push(pixels[y][x]);
-    }
-  }
-
-  const pixelRows = Array(Math.ceil(pixelArray.length / width))
-    .fill()
-    .map((_, i) => pixelArray.slice(i * width, (i + 1) * width));
-
-  // console.log(pixelRows);
-
   // if the image row data is not a multiple of 4, then we fill padding bytes
   const paddingBytesPerRow = Array((4 - ((width * 24 / 8) % 4)) % 4).fill(0);
-
-  // console.log(paddingBytesPerRow.length);
-
-  return pixelRows.reduce((a, c) => a.concat(...c, ...paddingBytesPerRow), []);
+  return pixels.reduce((a, c) => a.concat(...c, ...paddingBytesPerRow), []);
 }
 
 class BMPImage {
@@ -128,8 +107,6 @@ class BMPImage {
     const pixelDataBytes = getPixelDataBytes(this.width, this.height, this.pixels);
     const infoHeaderBytes = getInfoHeaderBytes(this.width, this.height, this.dpi);
     const headerBytes = getHeaderBytes(pixelDataBytes.length + 54);
-
-    console.log(JSON.stringify(pixelDataBytes));
 
     return [
       ...headerBytes,

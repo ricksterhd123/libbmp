@@ -11,7 +11,7 @@ const BMPImage = require('./libbmp');
   for (let t = 0; t < width; t++) {
     let x = t;
     let y = fn(t) % (height + 1);
-    bmpImage.setPixel(x,y, 255, 0, 0);
+    bmpImage.setPixel(x, y, 255, 0, 0);
   }
 
   await fsp.writeFile("image.bmp", bmpImage.toBuffer());
