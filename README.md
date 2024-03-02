@@ -34,7 +34,7 @@ const bmpImage = new BMPImage(width, height);
 
 for (let y = 0; y < height; y++) {
   for (let x = 0; x < width; x++) {
-    bmpImage.setPixel(x, y, 255, 255, 255, 255);
+    bmpImage.setPixel(x, y, 255, 255, 255);
   }
 }
 
