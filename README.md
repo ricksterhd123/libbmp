@@ -1,5 +1,5 @@
 # libbmp
-Pure JS implementation for the bmp image format
+Pure JS implementation of the bmp image format
 
 ## Example usage
 ```js
